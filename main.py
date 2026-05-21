@@ -23,6 +23,22 @@ from models import ResultTableModel
 from ui_main import MainWindowUI
 
 
+DEFAULT_SQL_BY_DATABASE_TYPE = {
+    "mysql": (
+        "select vn , hn , vstdate,vsttime from ovst "
+        "where vstdate = CURDATE() order by vn DESC limit 1"
+    ),
+    "postgresql": (
+        "select vn , hn , vstdate,vsttime from ovst "
+        "where vstdate = CURRENT_DATE order by vn DESC limit 1"
+    ),
+}
+
+
+def default_sql_for(database_type: str) -> str:
+    return DEFAULT_SQL_BY_DATABASE_TYPE[normalize_database_type(database_type)]
+
+
 @dataclass(frozen=True)
 class ConnectionParams:
     database_type: str
@@ -133,6 +149,7 @@ class MainWindow(QMainWindow):
         self.load_connection_settings(self._active_database_type)
         self._loading_settings = False
         self.update_database_type_controls()
+        self.apply_default_query_sql(self._active_database_type)
         geom = s.value("window/geometry")
         if geom is not None:
             self.restoreGeometry(geom)
@@ -200,6 +217,7 @@ class MainWindow(QMainWindow):
         self._active_database_type = database_type
         self.db = create_client(database_type)
         self.update_database_type_controls()
+        self.apply_default_query_sql(database_type)
 
     def update_database_type_controls(self):
         is_mysql = (
@@ -207,6 +225,13 @@ class MainWindow(QMainWindow):
         )
         self.ui.charset_combo.setEnabled(is_mysql)
         self.ui.charset_label.setEnabled(is_mysql)
+
+    def apply_default_query_sql(self, database_type):
+        current_sql = self.ui.query_edit.toPlainText().strip()
+        default_sql_values = set(DEFAULT_SQL_BY_DATABASE_TYPE.values())
+        if current_sql and current_sql not in default_sql_values:
+            return
+        self.ui.query_edit.setPlainText(default_sql_for(database_type))
 
     def connection_params_from_ui(self):
         database_type = self.ui.db_type_combo.currentText()

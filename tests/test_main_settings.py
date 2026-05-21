@@ -70,6 +70,37 @@ class PerBackendSettingsTest(unittest.TestCase):
 
         self.assertEqual(win.ui.password_edit.echoMode(), QLineEdit.EchoMode.Normal)
 
+    def test_query_editor_starts_with_mysql_default_sql(self):
+        win = self.make_window()
+        self.addCleanup(win.close)
+
+        self.assertEqual(
+            win.ui.query_edit.toPlainText(),
+            "select vn , hn , vstdate,vsttime from ovst "
+            "where vstdate = CURDATE() order by vn DESC limit 1",
+        )
+
+    def test_switching_to_postgresql_updates_default_sql_date_function(self):
+        win = self.make_window()
+        self.addCleanup(win.close)
+
+        win.ui.db_type_combo.setCurrentText("PostgreSQL")
+
+        self.assertEqual(
+            win.ui.query_edit.toPlainText(),
+            "select vn , hn , vstdate,vsttime from ovst "
+            "where vstdate = CURRENT_DATE order by vn DESC limit 1",
+        )
+
+    def test_switching_database_type_does_not_replace_custom_sql(self):
+        win = self.make_window()
+        self.addCleanup(win.close)
+
+        win.ui.query_edit.setPlainText("select 1")
+        win.ui.db_type_combo.setCurrentText("PostgreSQL")
+
+        self.assertEqual(win.ui.query_edit.toPlainText(), "select 1")
+
 
 if __name__ == "__main__":
     unittest.main()
