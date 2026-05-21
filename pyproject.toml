@@ -1,0 +1,11 @@
+[project]
+name = "mysql-test"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "PyQt6>=6.7",
+    "psycopg[binary]>=3.2",
+    "pymysql>=1.1",
+]
